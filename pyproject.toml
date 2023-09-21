@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "musicleague-analytics"
+version = "0.1.0"
+description = "Analytics tools for Music League"
+authors = ["Matt Ball <matt.ball@heisencoder.net>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pydantic = "^2.3.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
