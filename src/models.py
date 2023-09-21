@@ -3,7 +3,7 @@
 
 from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class Round(BaseModel):
@@ -27,8 +27,8 @@ class Round(BaseModel):
     templateId: str
 
 
-class Rounds(BaseModel):
-    __root__: List[Round]
+class Rounds(RootModel[List[Round]]):
+    root: List[Round]
 
 
 class Submission(BaseModel):
@@ -76,5 +76,5 @@ class Member(BaseModel):
     user: User
 
 
-class Members(BaseModel):
-    __root__: List[Member]
+class Members(RootModel[List[Member]]):
+    root: List[Member]
