@@ -4,10 +4,12 @@ version = "0.1.0"
 description = "Analytics tools for Music League"
 authors = ["Matt Ball <matt.ball@heisencoder.net>"]
 readme = "README.md"
+packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 pydantic = "^2.3.0"
+spotipy = "^2.23.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"

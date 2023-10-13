@@ -161,3 +161,6 @@ cython_debug/
 
 # Ignore all hidden files
 .*
+
+# Ignore local data files
+data/
