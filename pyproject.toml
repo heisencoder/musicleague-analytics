@@ -12,7 +12,10 @@ pydantic = "^2.4.0"
 spotipy = "^2.23.0"
 
 [tool.poetry.group.dev.dependencies]
+mypy = "*"
+pylint = "*"
 pytest = "^7.4.2"
+
 
 [build-system]
 requires = ["poetry-core"]
