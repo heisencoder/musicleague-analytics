@@ -14,6 +14,7 @@ def load_csv(filename: pathlib.Path) -> list[BaseModel]:
     with open(filename, encoding="utf8") as csvfile:
         reader = csv.DictReader(csvfile)
         assert reader.fieldnames is not None
+        # remove spaces from headers to make it compatible with the pydantic classes.
         reader.fieldnames = [x.replace(" ", "") for x in reader.fieldnames]
         for row in reader:
             lines.append(model_class(**row))
