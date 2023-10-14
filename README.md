@@ -26,6 +26,18 @@ to extract into a new directory named `data` in your local copy of this reposito
 This project uses Python3 and [Poetry](https://python-poetry.org/) as the package manager.
 You need to install poetry and use it to install the needed Python packages.
 
+## Getting a Spotify access token
+
+This package requires access to the (Spotify API)[https://developer.spotify.com/documentation/web-api)
+for downloading song details from the MusicLeague CSV files.  In particular, you will need to
+follow the Spotify API instructions for creating these.  Once you do that, you need to populate
+the following environment variables, which are used by the spotipy Python package:
+
+```shell
+export SPOTIPY_CLIENT_ID=<your_client_id>
+export SPOTIPY_CLIENT_SECRET=<your_client_secret>
+```
+
 ## Running the analyzer
 
 In a terminal, run
