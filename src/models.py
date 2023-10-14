@@ -1,80 +1,60 @@
-# Pydantic models for JSON responses from Music League Server
-# Generated via datamodel-code-generator from actual JSON responses
+"""Pydantic models for JSON responses from Music League Server
+Generated via datamodel-code-generator from actual JSON responses"""
 
-from typing import List
+from pydantic import BaseModel
 
-from pydantic import BaseModel, RootModel
+
+class Competitor(BaseModel):
+    """A single user in a given MusicLeague"""
+
+    ID: str
+    Name: str
 
 
 class Round(BaseModel):
-    id: str
-    name: str
-    completed: str
-    description: str
-    downvotesPerUser: int
-    highStakes: bool
-    leagueId: str
-    maxDownvotesPerSong: int
-    maxUpvotesPerSong: int
-    playlistUrl: str
-    sequence: int
-    songsPerUser: int
-    startDate: str
-    status: str
-    submissionsDue: str
-    upvotesPerUser: int
-    votesDue: str
-    templateId: str
+    """A MusicLeague round"""
 
-
-class Rounds(RootModel[List[Round]]):
-    root: List[Round]
+    ID: str
+    Created: str
+    Name: str
+    Description: str
+    PlaylistURL: str
 
 
 class Submission(BaseModel):
-    created: str
-    submitterId: str
-    spotifyUri: str
-    comment: str
-    commentVisibility: str
+    """A song submission by a competitor for a particular round"""
+
+    SpotifyURI: str
+    SubmitterID: str
+    Created: str
+    Comment: str
+    RoundID: str
+    VisibleToVoters: str
 
 
 class Vote(BaseModel):
-    comment: str
-    created: str
-    spotifyUri: str
-    voterId: str
-    weight: int
+    """A vote by a given competitor for a particular song in a given round"""
+
+    SpotifyURI: str
+    VoterID: str
+    Created: str
+    PointsAssigned: str
+    Comment: str
+    RoundID: str
 
 
-class Standing(BaseModel):
-    pointsActual: int
-    pointsPossible: int
-    rank: int
-    submission: Submission
-    submitterVoted: bool
-    tieBreaker: str
-    votes: List[Vote]
+FILE_TO_MODEL_MAP = {
+    "competitors.csv": Competitor,
+    "rounds.csv": Round,
+    "submissions.csv": Submission,
+    "votes.csv": Vote,
+}
 
 
-class Standings(BaseModel):
-    standings: List[Standing]
+class AllFiles(BaseModel):
+    """All the data from all the CSV files in a given MusicLeague Export"""
 
-
-class User(BaseModel):
-    id: str
-    name: str
-    profileImage: str
-
-
-class Member(BaseModel):
-    chatReadMarker: str
-    created: str
-    isAdmin: bool
-    isPlayer: bool
-    mine: bool
-    user: User
-
-
-class Members(RootModel[List[Member]]):
-    root: List[Member]
+    competitors: list[Competitor]
+    rounds: list[Round]
+    submissions: list[Submission]
+    votes: list[Vote]
