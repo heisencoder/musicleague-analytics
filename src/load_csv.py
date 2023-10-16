@@ -21,10 +21,10 @@ def load_csv(filename: pathlib.Path) -> list[BaseModel]:
     return lines
 
 
-def load_csvs(directory: str) -> dict[str, list[BaseModel]]:
+def load_csvs(directory: str) -> models.AllFiles:
     """Loads all the MusicLeague CSVs in a given directory"""
     all_models = {}
     for basename in models.FILE_TO_MODEL_MAP:
         filename = pathlib.Path(directory, basename)
         all_models[basename.replace(".csv", "")] = load_csv(filename)
-    return all_models
+    return models.AllFiles.model_validate(all_models)
