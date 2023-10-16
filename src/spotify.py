@@ -92,18 +92,19 @@ class Track(BaseModel):
     uri: str
 
 
-def get_tracks(tids: list[str]) -> list[Track]:
+def get_tracks(tids: list[str]) -> dict[str, Track]:
     """Returns Spotify track details for a given list of Spotify URI tracks"""
 
     # Based on https://github.com/spotipy-dev/spotipy/blob/master/examples/show_tracks.py
     client_credentials_manager = SpotifyClientCredentials()
     sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
-    tracks = []
+    tracks = {}
 
     for start in range(0, len(tids), MAX_TRACKS_PER_CALL):
         results = sp.tracks(tids[start : start + MAX_TRACKS_PER_CALL])
         for track in results["tracks"]:
-            tracks.append(Track.model_validate(track))
+            track_obj = Track.model_validate(track)
+            tracks[track_obj.uri] = track_obj
 
     return tracks

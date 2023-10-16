@@ -25,10 +25,10 @@ class Submission(BaseModel):
     """A song submission by a competitor for a particular round"""
 
     SpotifyURI: str
-    SubmitterID: str
+    SubmitterID: str  # Foreign key to Competitor.ID
     Created: str
     Comment: str
-    RoundID: str
+    RoundID: str  # Foreign key to Round.ID
     VisibleToVoters: str
 
 
@@ -36,11 +36,11 @@ class Vote(BaseModel):
     """A vote by a given competitor for a particular song in a given round"""
 
     SpotifyURI: str
-    VoterID: str
+    VoterID: str  # Foreign key to Competitor.ID
     Created: str
     PointsAssigned: str
     Comment: str
-    RoundID: str
+    RoundID: str  # Foreign key to Round.ID
 
 
 FILE_TO_MODEL_MAP = {

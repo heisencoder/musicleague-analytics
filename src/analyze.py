@@ -26,7 +26,7 @@ def main(args: argparse.Namespace):
     submissions = all_files.submissions
     track_uris = [s.SpotifyURI for s in submissions]
     tracks = spotify.get_tracks(track_uris)
-    pprint.pprint(tracks[0])
+    pprint.pprint(tracks["spotify:track:0V3wPSX9ygBnCm8psDIegu"])
 
 
 if __name__ == "__main__":
