@@ -14,13 +14,6 @@ this download.
 This repo is very much in draft form right now, and assumes that you are comfortable using Python
 and the command-line in a terminal.
 
-## Downloading data
-
-You will need to download the CSV data for a given MusicLeague league.  If you are a patreon
-subscriber for MusicLeague, then on the league's homepage, this should enable a pull-down under
-the "Action" menu labeled "Export League Data".  This will download a zip file that you will need
-to extract into a new directory named `data` in your local copy of this repository.
-
 ## Installing Python packages
 
 This project uses Python3 and [Poetry](https://python-poetry.org/) as the package manager.
@@ -38,10 +31,17 @@ export SPOTIPY_CLIENT_ID=<your_client_id>
 export SPOTIPY_CLIENT_SECRET=<your_client_secret>
 ```
 
+## Downloading data
+
+You will need to download the CSV data for a given MusicLeague league.  If you are a patreon
+subscriber for MusicLeague, then on the league's homepage, this should enable a pull-down under
+the "Action" menu labeled "Export League Data".  This will download a zip file that you will need
+to extract into a new directory named `data` in your local copy of this repository.
+
 ## Running the analyzer
 
 In a terminal, run
 
 ```shell
-poetry run python3 src/analyze.py --directory data
+poetry run python3 src/analyze.py --directory data --output_file flat_data.csv
 ```
