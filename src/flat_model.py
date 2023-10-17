@@ -9,6 +9,8 @@ from src import csv_model
 from src import spotify
 
 
+VOTE_CAP_POINTS = 2  # Highest number of points to assign for cap_points
+
 class FlatVote(BaseModel):
     """A flattened version of a Vote or Submission"""
 
@@ -20,6 +22,7 @@ class FlatVote(BaseModel):
     track_name: str  # Name of Spotify track
     track_artists: str  # semicolon-joined list of artist names on track
     points: int  # Number of points given to song by voter. Self-submissions included
+    cap_points: int  # Number of points but with a capped vote
     is_submitter: bool  # Whether this person submitted the song
 
 
@@ -73,6 +76,7 @@ def get_missing_votes(
                     voter_name=competitors[missing_voter],
                     **get_track_dict(tracks[track_uri]),
                     points=0,
+                    cap_points=0,
                     is_submitter=False,
                 )
                 missing_votes.append(blank_vote)
@@ -102,6 +106,7 @@ def flatten_data(
                 voter_name=competitors[submission.SubmitterID],
                 **get_track_dict(track),
                 points=self_submission_points,
+                cap_points=VOTE_CAP_POINTS,
                 is_submitter=True,
             )
         )
@@ -116,6 +121,7 @@ def flatten_data(
                 voter_name=competitors[vote.VoterID],
                 **get_track_dict(track),
                 points=vote.PointsAssigned,
+                cap_points=min(vote.PointsAssigned, VOTE_CAP_POINTS),
                 is_submitter=False,
             )
         )
