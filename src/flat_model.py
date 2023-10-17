@@ -11,6 +11,7 @@ from src import spotify
 
 VOTE_CAP_POINTS = 2  # Highest number of points to assign for cap_points
 
+
 class FlatVote(BaseModel):
     """A flattened version of a Vote or Submission"""
 
@@ -59,6 +60,8 @@ def get_missing_votes(
         lambda: defaultdict(set)
     )  # dict of roundIDs to dict of SpotifyURI to set of VoterIDS
     for vote in votes:
+        if vote.is_submitter:
+            continue
         round_voters[vote.round_id].add(vote.voter_id)
         round_songs[vote.round_id].add(vote.track_uri)
         round_song_voters[vote.round_id][vote.track_uri].add(vote.voter_id)

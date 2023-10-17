@@ -20,17 +20,22 @@ parser.add_argument(
     dest="output_file",
     help="filename to write flattened data out to",
     type=str,
-    default="flat_data.csv",
+    default="data/flat_data.csv",
+)
+parser.add_argument(
+    "--flat_input_file",
+    dest="flat_input_file",
+    help="filename to read flattened data from",
+    type=str,
+    default="data/flat_data.csv",
 )
 
 
 def main(args: argparse.Namespace):
     """Main entry point for MusicLeague analyzer"""
-    directory = args.directory
-    flat_votes = flat_model.load_data(directory)
+    flat_votes = flat_model.load_data(args.directory)
     flat_model.write_flat_data(flat_votes, args.output_file)
 
 
 if __name__ == "__main__":
-    _args = parser.parse_args()
-    main(_args)
+    main(parser.parse_args())
