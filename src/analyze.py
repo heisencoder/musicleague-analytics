@@ -24,7 +24,7 @@ parser.add_argument(
 
 
 class FlatVote(BaseModel):
-    """A flattened version of a Vote and Submission"""
+    """A flattened version of a Vote or Submission"""
 
     round_id: str  # Round.ID
     round_name: str  # Foreign key to Round.Name
@@ -37,15 +37,17 @@ class FlatVote(BaseModel):
     is_submitter: bool  # Whether this person submitted the song
 
 
-def zero_fill_votes(
-    votes: list[csv_model.Vote], competitors: list[csv_model.Competitor]
-):
+def get_missing_votes(
+    votes: list[FlatVote], competitors: dict[str, str], rounds: dict[str, str]
+) -> list[FlatVote]:
     """Find implicit zero votes and fill-in an explicit vote of zero points.
 
     Note that this also requires identifying who did not participate in a particular round,
-    either due to not submitting a song in time, or not submitting votes in time.
+    either due to not submitting a song in time, or not submitting votes in time, and
+    not providing zero votes for them.
     """
 
+    missing_votes = []
     # First, figure out who voted in a given round. Each participant must have voted
     # at least one time, due to needing to spend all points.
 
@@ -55,26 +57,31 @@ def zero_fill_votes(
         lambda: defaultdict(set)
     )  # dict of roundIDs to dict of SpotifyURI to set of VoterIDS
     for vote in votes:
-        round_voters[vote.RoundID].add(vote.VoterID)
-        round_songs[vote.RoundID].add(vote.SpotifyURI)
-        round_song_voters[vote.RoundID][vote.SpotifyURI].add(vote.VoterID)
+        round_voters[vote.round_id].add(vote.voter_id)
+        round_songs[vote.round_id].add(vote.track_uri)
+        round_song_voters[vote.round_id][vote.track_uri].add(vote.voter_id)
 
     for round_id in round_voters:
-        for song_id in round_songs[round_id]:
+        for track_uri in round_songs[round_id]:
             missing_voters = (
-                round_voters[round_id] - round_song_voters[round_id][song_id]
+                round_voters[round_id] - round_song_voters[round_id][track_uri]
             )
             for missing_voter in missing_voters:
-                blank_vote = csv_model.Vote(
-                    SpotifyURI=song_id,
-                    VoterID=missing_voter,
-                    Created="unused_date",
-                    PointsAssigned=0,
-                    Comment="",
-                    RoundID=round_id,
+                blank_vote = FlatVote(
+                    round_id=round_id,
+                    round_name=rounds[round_id],
+                    voter_id=missing_voter,
+                    voter_name=competitors[missing_voter],
+                    track_uri=track_uri,
+                    track_name="",
+                    track_artist="",
+                    points=0,
+                    is_submitter=False,
                 )
                 pprint(blank_vote)
-                votes.append(blank_vote)
+                missing_votes.append(blank_vote)
+
+    return missing_votes
 
 
 def flatten_data(all_files: csv_model.AllFiles) -> list[FlatVote]:
@@ -117,16 +124,22 @@ def flatten_data(all_files: csv_model.AllFiles) -> list[FlatVote]:
             )
         )
 
-    return flat_votes
+    missing_votes = get_missing_votes(flat_votes, competitors, rounds)
+
+    return flat_votes + missing_votes
 
 
-def load_data(directory: str) -> None:
+def load_data(directory: str) -> list[FlatVote]:
+    """Loads all the CSV in a given directory and returns a list of FlatVotes"""
     all_files = csv_model.load_csvs(directory)
-    print(f"len(votes)={len(all_files.votes)}")
+    print(
+        f"len(votes)={len(all_files.votes)}, len(submissions)={len(all_files.submissions)}"
+    )
     flat_votes = flatten_data(all_files)
-    print(f"len(votes)={len(all_files.votes)}")
     for vote in flat_votes:
         pprint(vote)
+    print(f"len(votes)={len(flat_votes)}")
+    return flat_votes
     # submissions = all_files.submissions
     # track_uris = [s.SpotifyURI for s in submissions]
     # tracks = spotify.get_tracks(track_uris)
