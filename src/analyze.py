@@ -4,10 +4,14 @@ This module will parse arguments and perform commands
 """
 
 import argparse
-import pprint
+from collections import defaultdict
+from pprint import pprint
+
+from pydantic import BaseModel
 
 from src import csv_model
-from src import spotify
+
+# from src import spotify
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -19,14 +23,120 @@ parser.add_argument(
 )
 
 
+class FlatVote(BaseModel):
+    """A flattened version of a Vote and Submission"""
+
+    round_id: str  # Round.ID
+    round_name: str  # Foreign key to Round.Name
+    voter_id: str  # Competitor.ID
+    voter_name: str  # Foreign key to Competitor.Name
+    track_uri: str  # Spotify Track URI
+    track_name: str
+    track_artist: str
+    points: int  # Number of points given to song by voter. Self-submissions included
+    is_submitter: bool  # Whether this person submitted the song
+
+
+def zero_fill_votes(
+    votes: list[csv_model.Vote], competitors: list[csv_model.Competitor]
+):
+    """Find implicit zero votes and fill-in an explicit vote of zero points.
+
+    Note that this also requires identifying who did not participate in a particular round,
+    either due to not submitting a song in time, or not submitting votes in time.
+    """
+
+    # First, figure out who voted in a given round. Each participant must have voted
+    # at least one time, due to needing to spend all points.
+
+    round_voters = defaultdict(set)  # dict of RoundIDs to set of VoterIDs
+    round_songs = defaultdict(set)  # dict of RoundIDs to set of track SpotifyURI
+    round_song_voters: dict[str, dict[str, set[str]]] = defaultdict(
+        lambda: defaultdict(set)
+    )  # dict of roundIDs to dict of SpotifyURI to set of VoterIDS
+    for vote in votes:
+        round_voters[vote.RoundID].add(vote.VoterID)
+        round_songs[vote.RoundID].add(vote.SpotifyURI)
+        round_song_voters[vote.RoundID][vote.SpotifyURI].add(vote.VoterID)
+
+    for round_id in round_voters:
+        for song_id in round_songs[round_id]:
+            missing_voters = (
+                round_voters[round_id] - round_song_voters[round_id][song_id]
+            )
+            for missing_voter in missing_voters:
+                blank_vote = csv_model.Vote(
+                    SpotifyURI=song_id,
+                    VoterID=missing_voter,
+                    Created="unused_date",
+                    PointsAssigned=0,
+                    Comment="",
+                    RoundID=round_id,
+                )
+                pprint(blank_vote)
+                votes.append(blank_vote)
+
+
+def flatten_data(all_files: csv_model.AllFiles) -> list[FlatVote]:
+    """Flattens and concatentates all CSV votes and submissions into one list."""
+    flat_votes = []
+
+    competitors = {c.ID: c.Name for c in all_files.competitors}
+    rounds = {r.ID: r.Name for r in all_files.rounds}
+
+    # Number of points to implicitly assign to one's own submission
+    self_submission_points = len(competitors)
+
+    for submission in all_files.submissions:
+        flat_votes.append(
+            FlatVote(
+                round_id=submission.RoundID,
+                round_name=rounds[submission.RoundID],
+                voter_id=submission.SubmitterID,
+                voter_name=competitors[submission.SubmitterID],
+                track_uri=submission.SpotifyURI,
+                track_name="",
+                track_artist="",
+                points=self_submission_points,
+                is_submitter=True,
+            )
+        )
+
+    for vote in all_files.votes:
+        flat_votes.append(
+            FlatVote(
+                round_id=vote.RoundID,
+                round_name=rounds[vote.RoundID],
+                voter_id=vote.VoterID,
+                voter_name=competitors[vote.VoterID],
+                track_uri=vote.SpotifyURI,
+                track_name="",
+                track_artist="",
+                points=vote.PointsAssigned,
+                is_submitter=False,
+            )
+        )
+
+    return flat_votes
+
+
+def load_data(directory: str) -> None:
+    all_files = csv_model.load_csvs(directory)
+    print(f"len(votes)={len(all_files.votes)}")
+    flat_votes = flatten_data(all_files)
+    print(f"len(votes)={len(all_files.votes)}")
+    for vote in flat_votes:
+        pprint(vote)
+    # submissions = all_files.submissions
+    # track_uris = [s.SpotifyURI for s in submissions]
+    # tracks = spotify.get_tracks(track_uris)
+    # pprint(tracks["spotify:track:0V3wPSX9ygBnCm8psDIegu"])
+
+
 def main(args: argparse.Namespace):
     """Main entry point for MusicLeague analyzer"""
     directory = args.directory
-    all_files = csv_model.load_csvs(directory)
-    submissions = all_files.submissions
-    track_uris = [s.SpotifyURI for s in submissions]
-    tracks = spotify.get_tracks(track_uris)
-    pprint.pprint(tracks["spotify:track:0V3wPSX9ygBnCm8psDIegu"])
+    load_data(directory)
 
 
 if __name__ == "__main__":

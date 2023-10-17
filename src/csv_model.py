@@ -41,7 +41,7 @@ class Vote(BaseModel):
     SpotifyURI: str  # Spotify Track URI
     VoterID: str  # Foreign key to Competitor.ID
     Created: str
-    PointsAssigned: str
+    PointsAssigned: int
     Comment: str
     RoundID: str  # Foreign key to Round.ID
 
