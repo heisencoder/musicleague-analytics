@@ -45,3 +45,9 @@ In a terminal, run
 ```shell
 poetry run python3 src/analyze.py --directory data --output_file flat_data.csv
 ```
+
+At this point, all that this tool does is flatten the four MusicLeague
+CSV files into a single file by joining on all the foreign keys, and it
+also augments each row with the name of the spotify track and artists.
+
+TBD: Add additional analytics functions to process this data.
