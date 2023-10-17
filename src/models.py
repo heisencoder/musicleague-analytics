@@ -24,7 +24,7 @@ class Round(BaseModel):
 class Submission(BaseModel):
     """A song submission by a competitor for a particular round"""
 
-    SpotifyURI: str
+    SpotifyURI: str  # Spotify Track URI
     SubmitterID: str  # Foreign key to Competitor.ID
     Created: str
     Comment: str
@@ -35,7 +35,7 @@ class Submission(BaseModel):
 class Vote(BaseModel):
     """A vote by a given competitor for a particular song in a given round"""
 
-    SpotifyURI: str
+    SpotifyURI: str  # Spotify Track URI
     VoterID: str  # Foreign key to Competitor.ID
     Created: str
     PointsAssigned: str

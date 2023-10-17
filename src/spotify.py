@@ -93,7 +93,10 @@ class Track(BaseModel):
 
 
 def get_tracks(tids: list[str]) -> dict[str, Track]:
-    """Returns Spotify track details for a given list of Spotify URI tracks"""
+    """Returns Spotify track details for a given list of Spotify URI tracks
+
+    Returns a dictionary of Spotify URI to the corresponding Track object.
+    """
 
     # Based on https://github.com/spotipy-dev/spotipy/blob/master/examples/show_tracks.py
     client_credentials_manager = SpotifyClientCredentials()
