@@ -25,15 +25,21 @@ class FlatVote(BaseModel):
     points: int  # Number of points given to song by voter. Self-submissions included
     cap_points: int  # Number of points but with a capped vote
     is_submitter: bool  # Whether this person submitted the song
+    track_genres: str  # semicolon-joined list of genres of artists on the track
 
 
 def get_track_dict(track: spotify.Track) -> dict[str, str]:
     """Returns a dict that contains track fields of a FlatVote"""
     # pylint: disable=locally-disabled, use-dict-literal
+    track_genres: set[str] = set()
+    for artist in track.artists:
+        assert artist.genres is not None
+        track_genres.update(artist.genres)
     return dict(
         track_uri=track.uri,
         track_name=track.name,
         track_artists=";".join([a.name for a in track.artists]),
+        track_genres=";".join(sorted(track_genres)),
     )
 
 
@@ -142,6 +148,11 @@ def load_data(directory: str) -> list[FlatVote]:
     submissions = all_files.submissions
     track_uris = [s.SpotifyURI for s in submissions]
     tracks = spotify.get_tracks(track_uris)
+
+    all_artist_ids = set()
+    for track in tracks.values():
+        for artist in track.artists:
+            all_artist_ids.add(artist.id)
 
     flat_votes = flatten_data(all_files, tracks)
     return flat_votes

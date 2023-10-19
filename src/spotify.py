@@ -23,10 +23,8 @@ class ExternalUrls(BaseModel):
     spotify: str
 
 
-class Artist(BaseModel):
-    """The artists who performed the track.
-    Each artist object includes a link in href to more detailed information about the artist.
-    """
+class SimplifiedArtist(BaseModel):
+    """A simplified Spotify artist who performed the track or album."""
 
     external_urls: ExternalUrls
     href: str
@@ -34,6 +32,13 @@ class Artist(BaseModel):
     name: str
     type: str
     uri: str
+
+
+class Followers(BaseModel):
+    """Information about the followers of the artist."""
+
+    href: Optional[str]
+    total: int
 
 
 class Image(BaseModel):
@@ -44,12 +49,27 @@ class Image(BaseModel):
     width: int
 
 
+class Artist(BaseModel):
+    """A spotify Artist"""
+
+    external_urls: ExternalUrls
+    followers: Optional[Followers] = None
+    genres: Optional[List[str]] = None
+    href: str
+    id: str
+    images: Optional[List[Image]] = None
+    name: str
+    popularity: Optional[int] = None
+    type: str
+    uri: str
+
+
 class Album(BaseModel):
     """The album on which the track appears.
     The album object includes a link in href to full information about the album."""
 
     album_type: str
-    artists: List[Artist]
+    artists: List[SimplifiedArtist]
     available_markets: List[str]
     external_urls: ExternalUrls
     href: str
@@ -100,7 +120,7 @@ def get_spotipy_client() -> spotipy.Spotify:
     return spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
 
-def chunk_calls(func: Callable, result_key: str, ids: list[str]) -> Any:
+def _chunk_calls(func: Callable, result_key: str, ids: list[str]) -> Any:
     """Generator that yields items from a batch API call.
 
     Params:
@@ -128,16 +148,39 @@ def get_tracks(tids: list[str]) -> dict[str, Track]:
 
     tracks = {}
 
-    for track in chunk_calls(sp.tracks, "tracks", tids):
+    for track in _chunk_calls(sp.tracks, "tracks", tids):
         track_obj = Track.model_validate(track)
         tracks[track_obj.uri] = track_obj
+
+    # Note that despite documenting a Track as containing the full Artist,
+    # it actually contains a SimplifiedArtis. The remain code augments each
+    # track with a full Artist list, including fields like genre.
+
+    # Make a set of all unique artist IDs that appear in all the tracks
+    all_artist_ids = set()
+    for track in tracks.values():
+        for artist in track.artists:
+            all_artist_ids.add(artist.id)
+
+    # Get the detailed artist information for all the artists in the tracks
+    artists = get_artists(list(all_artist_ids))
+
+    # Replace the SimplifiedArtist instances with the full Artist for each track
+    for track in tracks.values():
+        artist_ids = track.artists
+        track.artists = [artists[a.id] for a in artist_ids]
 
     return tracks
 
 
-# def get_artists(artist_ids: list[str]) -> dict[str, Artist]:
-#     sp = get_spotipy_client()
+def get_artists(artist_ids: list[str]) -> dict[str, Artist]:
+    """Returns a dict of Spotify Artist objects from a given list of Artist IDs"""
+    sp = get_spotipy_client()
 
-#     artists = {}
+    artists = {}
 
-#     for
+    for artist in _chunk_calls(sp.artists, "artists", artist_ids):
+        artist_obj = Artist.model_validate(artist)
+        artists[artist_obj.id] = artist_obj
+
+    return artists
