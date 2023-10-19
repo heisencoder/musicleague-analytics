@@ -4,7 +4,8 @@ These Pydantic BaseModel classes were generated via a JSON download from Spotify
 conversion from JSON to Pydantic via https://jsontopydantic.com/
 """
 
-from typing import Any, List, Optional
+from functools import cache
+from typing import Any, Callable, List, Optional
 
 from pydantic import BaseModel
 
@@ -92,6 +93,30 @@ class Track(BaseModel):
     uri: str
 
 
+@cache
+def get_spotipy_client() -> spotipy.Spotify:
+    """Returns a new spotipy client using tokens stored via environment variables"""
+    client_credentials_manager = SpotifyClientCredentials()
+    return spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+
+
+def chunk_calls(func: Callable, result_key: str, ids: list[str]) -> Any:
+    """Generator that yields items from a batch API call.
+
+    Params:
+        func - The function to call with a list of string IDs in small batches
+        result_key - The key of the resulting dict that contains a list of items
+        ids - A list of IDs to pass to the callable func
+
+    Yields:
+        a stream of results from this particular API call
+    """
+    for start in range(0, len(ids), MAX_TRACKS_PER_CALL):
+        results = func(ids[start : start + MAX_TRACKS_PER_CALL])
+        for result in results[result_key]:
+            yield result
+
+
 def get_tracks(tids: list[str]) -> dict[str, Track]:
     """Returns Spotify track details for a given list of Spotify URI tracks
 
@@ -99,15 +124,20 @@ def get_tracks(tids: list[str]) -> dict[str, Track]:
     """
 
     # Based on https://github.com/spotipy-dev/spotipy/blob/master/examples/show_tracks.py
-    client_credentials_manager = SpotifyClientCredentials()
-    sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+    sp = get_spotipy_client()
 
     tracks = {}
 
-    for start in range(0, len(tids), MAX_TRACKS_PER_CALL):
-        results = sp.tracks(tids[start : start + MAX_TRACKS_PER_CALL])
-        for track in results["tracks"]:
-            track_obj = Track.model_validate(track)
-            tracks[track_obj.uri] = track_obj
+    for track in chunk_calls(sp.tracks, "tracks", tids):
+        track_obj = Track.model_validate(track)
+        tracks[track_obj.uri] = track_obj
 
     return tracks
+
+
+# def get_artists(artist_ids: list[str]) -> dict[str, Artist]:
+#     sp = get_spotipy_client()
+
+#     artists = {}
+
+#     for

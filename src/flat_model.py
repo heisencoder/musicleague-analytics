@@ -59,12 +59,13 @@ def get_missing_votes(
     round_song_voters: dict[str, dict[str, set[str]]] = defaultdict(
         lambda: defaultdict(set)
     )  # dict of roundIDs to dict of SpotifyURI to set of VoterIDS
+
     for vote in votes:
+        round_song_voters[vote.round_id][vote.track_uri].add(vote.voter_id)
         if vote.is_submitter:
             continue
         round_voters[vote.round_id].add(vote.voter_id)
         round_songs[vote.round_id].add(vote.track_uri)
-        round_song_voters[vote.round_id][vote.track_uri].add(vote.voter_id)
 
     for round_id in round_voters:
         for track_uri in round_songs[round_id]:
